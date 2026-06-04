@@ -21,6 +21,13 @@ function keyOf(productId: string, size: string) {
   return `${productId}::${size}`;
 }
 
+// Limita la cantidad a >= 0 y, si hay stock conocido, al stock disponible.
+function clampQty(qty: number, stock?: number) {
+  const q = Math.max(0, qty);
+  if (typeof stock === "number" && stock > 0) return Math.min(q, stock);
+  return q;
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -56,10 +63,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       );
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = { ...next[idx], qty: next[idx].qty + item.qty, unitPrice: item.unitPrice };
+        const stock = item.stock ?? next[idx].stock;
+        next[idx] = {
+          ...next[idx],
+          stock,
+          unitPrice: item.unitPrice,
+          qty: clampQty(next[idx].qty + item.qty, stock),
+        };
         return next;
       }
-      return [...prev, item];
+      return [...prev, { ...item, qty: clampQty(item.qty, item.stock) }];
     });
   };
 
@@ -74,7 +87,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       prev
         .map((p) =>
           keyOf(p.productId, p.size) === keyOf(productId, size)
-            ? { ...p, qty: Math.max(0, qty) }
+            ? { ...p, qty: clampQty(qty, p.stock) }
             : p
         )
         .filter((p) => p.qty > 0)

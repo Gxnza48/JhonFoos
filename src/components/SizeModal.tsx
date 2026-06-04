@@ -50,6 +50,7 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
       size: selectedSize.size,
       unitPrice: price,
       qty,
+      stock: selectedSize.stock,
       imageUrl: product.image_url,
     });
     onClose();
@@ -63,12 +64,12 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
       aria-modal="true"
     >
       <div
-        className="w-full max-w-lg rounded-md bg-[#fbfbf9] p-5 shadow-2xl sm:p-6"
+        className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Encabezado producto */}
-        <div className="flex gap-4 border-b border-neutral-200 pb-4">
-          <div className="h-20 w-20 flex-shrink-0 overflow-hidden border border-neutral-200 bg-[#d9d9d9]">
+        <div className="flex gap-4 border-b border-line pb-4">
+          <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-line bg-neutral-100">
             {product.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -113,10 +114,10 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
                   type="button"
                   onClick={() => setSize(s.size)}
                   className={
-                    "flex min-w-[60px] flex-col items-center rounded border px-3 py-2 transition " +
+                    "flex min-w-[60px] flex-col items-center rounded-md border px-3 py-2 transition " +
                     (active
                       ? "border-ink bg-ink text-white"
-                      : "border-neutral-300 bg-white text-ink hover:border-neutral-500")
+                      : "border-line bg-white text-ink hover:border-neutral-400")
                   }
                 >
                   <span className="text-base font-700 leading-none">{s.size}</span>
@@ -141,19 +142,19 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
               type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               disabled={!selectedSize || qty <= 1}
-              className="h-10 w-10 border border-neutral-300 text-lg font-600 text-ink disabled:opacity-40"
+              className="h-10 w-10 rounded-l-md border border-line text-lg font-600 text-ink transition hover:bg-neutral-50 disabled:opacity-40"
               aria-label="Restar"
             >
               −
             </button>
-            <div className="flex h-10 w-12 items-center justify-center border-y border-neutral-300 text-base font-600">
+            <div className="flex h-10 w-12 items-center justify-center border-y border-line text-base font-600">
               {qty}
             </div>
             <button
               type="button"
               onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
               disabled={!selectedSize || qty >= maxQty}
-              className="h-10 w-10 border border-neutral-300 text-lg font-600 text-ink disabled:opacity-40"
+              className="h-10 w-10 rounded-r-md border border-line text-lg font-600 text-ink transition hover:bg-neutral-50 disabled:opacity-40"
               aria-label="Sumar"
             >
               +
@@ -166,7 +167,7 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
           <button
             type="button"
             onClick={onClose}
-            className="border border-neutral-300 bg-white py-3 text-sm font-600 uppercase tracking-wider text-ink hover:bg-neutral-50"
+            className="rounded-md border border-line bg-white py-3 text-sm font-600 uppercase tracking-wider text-ink transition hover:bg-neutral-50"
           >
             Cancelar
           </button>
@@ -174,7 +175,7 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
             type="button"
             onClick={handleAdd}
             disabled={!canAdd}
-            className="bg-ink py-3 text-sm font-600 uppercase tracking-wider text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md bg-ink py-3 text-sm font-600 uppercase tracking-wider text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Agregar
           </button>

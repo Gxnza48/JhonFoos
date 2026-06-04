@@ -41,6 +41,7 @@ export interface CartItem {
   size: string;
   unitPrice: number; // precio efectivo (oferta si aplica)
   qty: number;
+  stock?: number; // pares disponibles de ese talle (tope para sumar)
   imageUrl: string | null;
 }
 

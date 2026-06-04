@@ -70,12 +70,19 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen pb-24">
-      <Header name={settings.store_name} subtitle={settings.store_subtitle} />
-      <OfferBanner show={settings.show_offer_banner} text={settings.offer_banner_text} />
-      <SearchBar value={search} onChange={setSearch} />
-      <SizeFilter sizes={availableSizes} selected={sizeFilter} onSelect={setSizeFilter} />
+      <div className="sticky top-0 z-30 shadow-sm">
+        <Header name={settings.store_name} subtitle={settings.store_subtitle} />
+        <div className="border-b border-line bg-white">
+          <div className="mx-auto max-w-7xl space-y-3 px-4 py-3 sm:px-6">
+            <SearchBar value={search} onChange={setSearch} />
+            <SizeFilter sizes={availableSizes} selected={sizeFilter} onSelect={setSizeFilter} />
+          </div>
+        </div>
+      </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <OfferBanner show={settings.show_offer_banner} text={settings.offer_banner_text} />
+
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {!configured ? (
           <div className="rounded border border-amber-300 bg-amber-50 p-6 text-sm text-amber-800">
             <p className="font-700">Falta conectar Supabase</p>
@@ -86,26 +93,29 @@ export default function HomePage() {
             </p>
           </div>
         ) : loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-square w-full bg-neutral-200" />
-                <div className="space-y-2 bg-white p-3">
-                  <div className="h-3 w-1/3 bg-neutral-200" />
-                  <div className="h-3 w-2/3 bg-neutral-200" />
-                  <div className="h-4 w-1/2 bg-neutral-200" />
+              <div
+                key={i}
+                className="animate-pulse overflow-hidden rounded-lg border border-line bg-white"
+              >
+                <div className="aspect-square w-full bg-neutral-100" />
+                <div className="space-y-2 p-3.5">
+                  <div className="h-2.5 w-1/3 rounded bg-neutral-100" />
+                  <div className="h-3 w-2/3 rounded bg-neutral-100" />
+                  <div className="h-4 w-1/2 rounded bg-neutral-100" />
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-neutral-500">
+          <div className="rounded-lg border border-line bg-white py-16 text-center text-sm text-neutral-500">
             {products.length === 0
               ? "Todavía no hay productos cargados."
               : "No se encontraron modelos con ese filtro."}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {filtered.map((p) => (
               <ProductCard
                 key={p.id}
@@ -133,8 +143,13 @@ export default function HomePage() {
         />
       )}
 
-      <footer className="border-t border-neutral-200 py-6 text-center text-xs text-neutral-400">
-        {settings.store_name} · Pedidos por WhatsApp
+      <footer className="mt-8 border-t border-line bg-white py-7 text-center">
+        <p className="font-brand text-sm font-700 uppercase tracking-[0.26em] text-ink">
+          {settings.store_name}
+        </p>
+        <p className="mt-1.5 text-[11px] uppercase tracking-[0.2em] text-neutral-400">
+          Catálogo mayorista · Pedidos por WhatsApp
+        </p>
       </footer>
     </main>
   );

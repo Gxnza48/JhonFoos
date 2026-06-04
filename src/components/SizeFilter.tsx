@@ -9,39 +9,37 @@ interface Props {
 export default function SizeFilter({ sizes, selected, onSelect }: Props) {
   if (sizes.length === 0) return null;
   return (
-    <div className="bg-[#6f6f6f]">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3">
-        <span className="mr-1 text-xs font-600 uppercase tracking-widest text-white/80">
-          Talle:
-        </span>
-        {sizes.map((s) => {
-          const active = selected === s;
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => onSelect(active ? null : s)}
-              className={
-                "min-w-[42px] rounded border px-3 py-1.5 text-sm font-600 transition " +
-                (active
-                  ? "border-white bg-white text-ink"
-                  : "border-white/40 bg-transparent text-white hover:bg-white/10")
-              }
-            >
-              {s}
-            </button>
-          );
-        })}
-        {selected && (
+    <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+      <span className="shrink-0 text-[11px] font-600 uppercase tracking-widest text-neutral-500">
+        Talle
+      </span>
+      {sizes.map((s) => {
+        const active = selected === s;
+        return (
           <button
+            key={s}
             type="button"
-            onClick={() => onSelect(null)}
-            className="ml-1 text-xs uppercase tracking-wide text-white/70 underline hover:text-white"
+            onClick={() => onSelect(active ? null : s)}
+            className={
+              "shrink-0 rounded-md border px-3 py-1.5 text-sm font-600 transition " +
+              (active
+                ? "border-ink bg-ink text-white"
+                : "border-line bg-white text-neutral-700 hover:border-neutral-400")
+            }
           >
-            Limpiar
+            {s}
           </button>
-        )}
-      </div>
+        );
+      })}
+      {selected && (
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          className="shrink-0 pl-1 text-xs font-500 uppercase tracking-wide text-neutral-400 underline-offset-2 hover:text-ink hover:underline"
+        >
+          Limpiar
+        </button>
+      )}
     </div>
   );
 }
