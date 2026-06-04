@@ -125,18 +125,18 @@ export default function ProductForm({
   }
 
   const inputCls =
-    "mt-1 w-full rounded border border-neutral-300 px-3 py-2 outline-none focus:border-ink";
+    "mt-1 w-full rounded-md border border-neutral-300 px-3 py-2.5 text-base outline-none transition focus:border-ink";
   const labelCls = "block text-xs font-600 uppercase tracking-wide text-neutral-500";
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/55 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/55 p-3 sm:p-4"
       onClick={onClose}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSave}
-        className="my-6 w-full max-w-2xl rounded-lg bg-white p-6 shadow-2xl"
+        className="my-4 w-full max-w-2xl rounded-xl bg-white p-5 shadow-2xl sm:my-6 sm:p-6"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-brand text-xl font-700 uppercase tracking-widest">
@@ -157,6 +157,7 @@ export default function ProductForm({
             <input
               className={inputCls}
               type="number"
+              inputMode="numeric"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
             />
@@ -170,6 +171,7 @@ export default function ProductForm({
             <input
               className={inputCls}
               type="number"
+              inputMode="decimal"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
@@ -179,6 +181,7 @@ export default function ProductForm({
             <input
               className={inputCls}
               type="number"
+              inputMode="decimal"
               value={offerPrice}
               onChange={(e) => setOfferPrice(e.target.value)}
             />
@@ -191,7 +194,7 @@ export default function ProductForm({
               type="checkbox"
               checked={isOffer}
               onChange={(e) => setIsOffer(e.target.checked)}
-              className="h-4 w-4"
+              className="h-5 w-5 accent-ink"
             />
             <span className="text-sm font-600">En oferta (muestra badge y precio tachado)</span>
           </label>
@@ -200,7 +203,7 @@ export default function ProductForm({
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="h-4 w-4"
+              className="h-5 w-5 accent-ink"
             />
             <span className="text-sm font-600">Activo (visible en la web)</span>
           </label>
@@ -261,14 +264,16 @@ export default function ProductForm({
             {sizes.map((r) => (
               <div key={r.key} className="flex items-center gap-2">
                 <input
-                  className="w-24 rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-ink"
+                  className="w-24 rounded-md border border-neutral-300 px-3 py-2.5 text-base outline-none focus:border-ink"
+                  inputMode="numeric"
                   placeholder="Talle"
                   value={r.size}
                   onChange={(e) => updateRow(r.key, { size: e.target.value })}
                 />
                 <input
-                  className="w-28 rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-ink"
+                  className="w-28 rounded-md border border-neutral-300 px-3 py-2.5 text-base outline-none focus:border-ink"
                   type="number"
+                  inputMode="numeric"
                   min="0"
                   placeholder="Pares"
                   value={r.stock}
@@ -277,7 +282,7 @@ export default function ProductForm({
                 <button
                   type="button"
                   onClick={() => removeRow(r.key)}
-                  className="text-sm text-offer"
+                  className="ml-auto rounded-md px-2 py-2 text-sm font-600 text-offer hover:bg-offer/10"
                   aria-label="Quitar talle"
                 >
                   Quitar
@@ -292,18 +297,18 @@ export default function ProductForm({
 
         {error && <p className="mt-4 text-sm text-offer">{error}</p>}
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="rounded border border-neutral-300 px-5 py-2.5 text-sm font-600 uppercase tracking-wide hover:bg-neutral-50"
+            className="w-full rounded-md border border-neutral-300 px-5 py-3 text-sm font-600 uppercase tracking-wide transition hover:bg-neutral-50 sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={saving || uploading}
-            className="rounded bg-ink px-6 py-2.5 text-sm font-700 uppercase tracking-wider text-white hover:bg-neutral-800 disabled:opacity-50"
+            className="w-full rounded-md bg-ink px-6 py-3 text-sm font-700 uppercase tracking-wider text-white transition hover:bg-neutral-800 disabled:opacity-50 sm:w-auto"
           >
             {saving ? "Guardando..." : "Guardar producto"}
           </button>
