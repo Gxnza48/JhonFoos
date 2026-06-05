@@ -9,7 +9,14 @@ interface Props {
   product: Product;
   currencySymbol: string;
   onClose: () => void;
-  onAdd: (item: CartItem) => void;
+  onAdd: (items: CartItem[]) => void;
+}
+
+// Tope de stock que se muestra al cliente (oculta el número exacto cuando hay mucho).
+const STOCK_CAP = 20;
+
+function stockLabel(stock: number) {
+  return stock > STOCK_CAP ? `${STOCK_CAP}+` : String(stock);
 }
 
 export default function SizeModal({ product, currencySymbol, onClose, onAdd }: Props) {
@@ -17,13 +24,21 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
     () => (product.sizes || []).filter((s) => s.stock > 0),
     [product]
   );
-  const [size, setSize] = useState<string | null>(null);
-  const [qty, setQty] = useState(1);
+
+  // Cantidad pedida por talle, indexada por id del talle.
+  const [qtys, setQtys] = useState<Record<string, number>>({});
 
   const price = effectivePrice(product);
   const discounted = hasDiscount(product);
-  const selectedSize = sizes.find((s) => s.size === size) || null;
-  const maxQty = selectedSize?.stock ?? 1;
+
+  const totalStock = useMemo(
+    () => sizes.reduce((a, s) => a + s.stock, 0),
+    [sizes]
+  );
+  const totalOrdered = useMemo(
+    () => Object.values(qtys).reduce((a, q) => a + q, 0),
+    [qtys]
+  );
 
   // Cerrar con Escape
   useEffect(() => {
@@ -34,25 +49,28 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Reajustar cantidad si supera el stock del talle elegido
-  useEffect(() => {
-    if (selectedSize && qty > selectedSize.stock) setQty(selectedSize.stock);
-  }, [selectedSize, qty]);
+  function setQty(sizeId: string, stock: number, value: number) {
+    const q = Math.max(0, Math.min(stock, value));
+    setQtys((prev) => ({ ...prev, [sizeId]: q }));
+  }
 
-  const canAdd = !!selectedSize && qty >= 1 && qty <= maxQty;
+  const canAdd = totalOrdered > 0;
 
   function handleAdd() {
-    if (!selectedSize) return;
-    onAdd({
-      productId: product.id,
-      code: product.code,
-      name: product.name,
-      size: selectedSize.size,
-      unitPrice: price,
-      qty,
-      stock: selectedSize.stock,
-      imageUrl: product.image_url,
-    });
+    const items: CartItem[] = sizes
+      .filter((s) => (qtys[s.id] ?? 0) > 0)
+      .map((s) => ({
+        productId: product.id,
+        code: product.code,
+        name: product.name,
+        size: s.size,
+        unitPrice: price,
+        qty: qtys[s.id],
+        stock: s.stock,
+        imageUrl: product.image_url,
+      }));
+    if (items.length === 0) return;
+    onAdd(items);
     onClose();
   }
 
@@ -64,106 +82,102 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
       aria-modal="true"
     >
       <div
-        className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-5 shadow-2xl sm:p-6"
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Encabezado producto */}
-        <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:gap-6">
-          <div className="relative aspect-square w-full flex-shrink-0 overflow-hidden rounded-lg border border-line bg-neutral-100 sm:w-64">
-            {product.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            ) : null}
-          </div>
-          <div className="min-w-0 sm:flex sm:flex-col sm:justify-center">
-            <p className="text-xs text-neutral-400">{product.code}</p>
-            <p className="text-xl font-700 uppercase leading-tight text-ink sm:text-2xl">
-              {product.name}
-            </p>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-700 text-ink">
-                {formatPrice(price, currencySymbol)}
+        <div className="border-b border-line px-5 pb-4 pt-5 sm:px-6">
+          <p className="text-xs text-neutral-400">{product.code}</p>
+          <p className="text-xl font-700 uppercase leading-tight text-ink sm:text-2xl">
+            {product.name}
+          </p>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <span className="text-xl font-700 text-ink sm:text-2xl">
+              {formatPrice(price, currencySymbol)}
+            </span>
+            <span className="text-sm text-neutral-400">por par</span>
+            {discounted && (
+              <span className="text-sm text-neutral-400 line-through">
+                {formatPrice(product.price, currencySymbol)}
               </span>
-              {discounted && (
-                <span className="text-base text-neutral-400 line-through">
-                  {formatPrice(product.price, currencySymbol)}
-                </span>
-              )}
-            </div>
+            )}
           </div>
+          <p className="mt-1 text-xs text-neutral-500">
+            {totalStock} {totalStock === 1 ? "par" : "pares"} disponibles ·{" "}
+            {sizes.length} {sizes.length === 1 ? "talle" : "talles"}
+          </p>
         </div>
 
-        {/* Selección de talle */}
-        <p className="mt-5 text-xs font-600 uppercase tracking-widest text-neutral-500">
-          Seleccionar talle
-        </p>
-
+        {/* Tabla cantidad por talle */}
         {sizes.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-500">Sin talles disponibles por ahora.</p>
+          <p className="px-5 py-8 text-sm text-neutral-500 sm:px-6">
+            Sin talles disponibles por ahora.
+          </p>
         ) : (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {sizes.map((s) => {
-              const active = size === s.size;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSize(s.size)}
-                  className={
-                    "flex min-w-[60px] flex-col items-center rounded-md border px-3 py-2 transition " +
-                    (active
-                      ? "border-ink bg-ink text-white"
-                      : "border-line bg-white text-ink hover:border-neutral-400")
-                  }
-                >
-                  <span className="text-base font-700 leading-none">{s.size}</span>
-                  <span
-                    className={
-                      "mt-1 text-[10px] " + (active ? "text-white/70" : "text-neutral-400")
-                    }
+          <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+            <p className="text-xs font-600 uppercase tracking-widest text-neutral-500">
+              Cantidad por talle
+            </p>
+
+            {/* Cabecera de columnas */}
+            <div className="mt-4 grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-line pb-2 text-[11px] font-600 uppercase tracking-wider text-neutral-400">
+              <span>Talle</span>
+              <span className="text-center">Disponible</span>
+              <span className="text-right pr-1">Pedido</span>
+            </div>
+
+            <div className="divide-y divide-line">
+              {sizes.map((s) => {
+                const qty = qtys[s.id] ?? 0;
+                return (
+                  <div
+                    key={s.id}
+                    className="grid grid-cols-[1fr_auto_auto] items-center gap-4 py-2.5"
                   >
-                    {s.stock} {s.stock === 1 ? "par" : "pares"}
-                  </span>
-                </button>
-              );
-            })}
+                    <span className="text-lg font-700 text-ink">{s.size}</span>
+                    <span className="min-w-[60px] text-center text-sm text-neutral-500">
+                      {stockLabel(s.stock)}
+                    </span>
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setQty(s.id, s.stock, qty - 1)}
+                        disabled={qty <= 0}
+                        className="h-10 w-10 rounded-l-md border border-line text-lg font-600 text-ink transition hover:bg-neutral-50 disabled:opacity-40"
+                        aria-label={`Restar talle ${s.size}`}
+                      >
+                        −
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={qty}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                          setQty(s.id, s.stock, Number.isNaN(n) ? 0 : n);
+                        }}
+                        className="h-10 w-12 border-y border-line text-center text-base font-600 text-ink focus:outline-none"
+                        aria-label={`Cantidad talle ${s.size}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setQty(s.id, s.stock, qty + 1)}
+                        disabled={qty >= s.stock}
+                        className="h-10 w-10 rounded-r-md border border-line text-lg font-600 text-ink transition hover:bg-neutral-50 disabled:opacity-40"
+                        aria-label={`Sumar talle ${s.size}`}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* Cantidad */}
-        <div className="mt-5 flex items-center justify-between">
-          <span className="text-sm font-600 text-ink">Cantidad de pares</span>
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              disabled={!selectedSize || qty <= 1}
-              className="h-10 w-10 rounded-l-md border border-line text-lg font-600 text-ink transition hover:bg-neutral-50 disabled:opacity-40"
-              aria-label="Restar"
-            >
-              −
-            </button>
-            <div className="flex h-10 w-12 items-center justify-center border-y border-line text-base font-600">
-              {qty}
-            </div>
-            <button
-              type="button"
-              onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
-              disabled={!selectedSize || qty >= maxQty}
-              className="h-10 w-10 rounded-r-md border border-line text-lg font-600 text-ink transition hover:bg-neutral-50 disabled:opacity-40"
-              aria-label="Sumar"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
         {/* Acciones */}
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3 border-t border-line px-5 py-4 sm:px-6">
           <button
             type="button"
             onClick={onClose}
@@ -175,9 +189,10 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
             type="button"
             onClick={handleAdd}
             disabled={!canAdd}
-            className="rounded-md bg-ink py-3 text-sm font-600 uppercase tracking-wider text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="col-span-2 rounded-md bg-ink py-3 text-sm font-600 uppercase tracking-wider text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Agregar
+            Agregar al pedido
+            {totalOrdered > 0 ? ` · ${totalOrdered}` : ""}
           </button>
         </div>
       </div>

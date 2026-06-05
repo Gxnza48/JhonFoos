@@ -136,8 +136,8 @@ export default function HomePage() {
           product={modalProduct}
           currencySymbol={settings.currency_symbol}
           onClose={() => setModalProduct(null)}
-          onAdd={(item) => {
-            addItem(item);
+          onAdd={(items) => {
+            items.forEach(addItem);
             setCartOpen(true);
           }}
         />
