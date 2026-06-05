@@ -64,12 +64,12 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
       aria-modal="true"
     >
       <div
-        className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl sm:p-6"
+        className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-5 shadow-2xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Encabezado producto */}
-        <div className="flex gap-4 border-b border-line pb-4">
-          <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-line bg-neutral-100">
+        <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:gap-6">
+          <div className="relative aspect-square w-full flex-shrink-0 overflow-hidden rounded-lg border border-line bg-neutral-100 sm:w-64">
             {product.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -79,17 +79,17 @@ export default function SizeModal({ product, currencySymbol, onClose, onAdd }: P
               />
             ) : null}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 sm:flex sm:flex-col sm:justify-center">
             <p className="text-xs text-neutral-400">{product.code}</p>
-            <p className="text-lg font-700 uppercase leading-tight text-ink">
+            <p className="text-xl font-700 uppercase leading-tight text-ink sm:text-2xl">
               {product.name}
             </p>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-lg font-700 text-ink">
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-700 text-ink">
                 {formatPrice(price, currencySymbol)}
               </span>
               {discounted && (
-                <span className="text-sm text-neutral-400 line-through">
+                <span className="text-base text-neutral-400 line-through">
                   {formatPrice(product.price, currencySymbol)}
                 </span>
               )}
