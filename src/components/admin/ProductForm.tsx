@@ -8,6 +8,7 @@ import {
   updateProduct,
   uploadProductImage,
 } from "@/lib/admin";
+import ImageCropper from "./ImageCropper";
 
 interface SizeRow {
   key: string;
@@ -52,6 +53,7 @@ export default function ProductForm({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function updateRow(key: string, patch: Partial<SizeRow>) {
@@ -61,19 +63,44 @@ export default function ProductForm({
     setSizes((rows) => rows.filter((r) => r.key !== key));
   }
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // Al elegir un archivo abrimos el recortador (no subimos todavía).
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
+    setCropSrc(URL.createObjectURL(file));
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  // Reajustar una foto ya cargada: la traemos como blob para poder recortarla.
+  async function handleRecrop() {
+    if (!imageUrl) return;
+    setError(null);
+    try {
+      const blob = await fetch(imageUrl).then((r) => r.blob());
+      setCropSrc(URL.createObjectURL(blob));
+    } catch {
+      setError("No se pudo cargar la foto para acomodarla.");
+    }
+  }
+
+  function closeCropper() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  }
+
+  // El recortador nos devuelve el blob cuadrado ya listo para subir.
+  async function handleCropConfirm(blob: Blob) {
     setUploading(true);
     setError(null);
     try {
-      const url = await uploadProductImage(file);
+      const url = await uploadProductImage(blob, "jpg");
       setImageUrl(url);
+      closeCropper();
     } catch (err: any) {
       setError("No se pudo subir la imagen: " + (err?.message || "error"));
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -228,18 +255,37 @@ export default function ProductForm({
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                onChange={handleUpload}
-                className="text-sm"
+                onChange={handleFile}
+                className="hidden"
               />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-600 transition hover:bg-neutral-50"
+              >
+                {imageUrl ? "Cambiar foto" : "Subir foto"}
+              </button>
+              <p className="text-xs text-neutral-400">
+                Vas a poder acomodar y hacer zoom antes de guardar.
+              </p>
               {uploading && <p className="text-xs text-neutral-500">Subiendo...</p>}
               {imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => setImageUrl(null)}
-                  className="block text-xs text-offer underline"
-                >
-                  Quitar foto
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={handleRecrop}
+                    className="text-xs font-600 text-ink underline"
+                  >
+                    Acomodar foto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl(null)}
+                    className="text-xs text-offer underline"
+                  >
+                    Quitar foto
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -314,6 +360,15 @@ export default function ProductForm({
           </button>
         </div>
       </form>
+
+      {cropSrc && (
+        <ImageCropper
+          src={cropSrc}
+          busy={uploading}
+          onCancel={closeCropper}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   );
 }

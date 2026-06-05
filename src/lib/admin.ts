@@ -111,15 +111,16 @@ export async function replaceSizes(
 }
 
 // ---------- Imágenes (Storage) ----------
-export async function uploadProductImage(file: File): Promise<string> {
+// Recibe un Blob (ya recortado a cuadrado por el admin) y lo sube como JPEG.
+export async function uploadProductImage(file: Blob, ext = "jpg"): Promise<string> {
   const supabase = getSupabaseBrowser();
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const safe = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const path = `products/${safe}`;
 
+  const contentType = file.type || "image/jpeg";
   const { error } = await supabase.storage
     .from(IMAGE_BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false });
+    .upload(path, file, { cacheControl: "3600", upsert: false, contentType });
   if (error) throw error;
 
   const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
