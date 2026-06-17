@@ -27,6 +27,7 @@ export default function AdminPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [query, setQuery] = useState("");
 
   // Verificar sesión + suscribirse a cambios de auth
   useEffect(() => {
@@ -67,6 +68,14 @@ export default function AdminPage() {
     await signOut();
     setLoggedIn(false);
   }
+
+  const q = query.trim().toLowerCase();
+  const filteredProducts = q
+    ? products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
+      )
+    : products;
 
   if (!configured) {
     return (
@@ -136,27 +145,51 @@ export default function AdminPage() {
 
         {tab === "products" && (
           <>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-neutral-500">
-                {products.length} producto{products.length === 1 ? "" : "s"}
-              </p>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-xs">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                  {/* lupa */}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                </span>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar por modelo o código…"
+                  className="w-full rounded border border-neutral-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-ink"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   setEditProduct(null);
                   setShowForm(true);
                 }}
-                className="rounded bg-ink px-5 py-2.5 text-sm font-700 uppercase tracking-wider text-white hover:bg-neutral-800"
+                className="shrink-0 rounded bg-ink px-5 py-2.5 text-sm font-700 uppercase tracking-wider text-white hover:bg-neutral-800"
               >
                 + Nuevo producto
               </button>
             </div>
 
+            <p className="mb-4 text-sm text-neutral-500">
+              {q
+                ? `${filteredProducts.length} de ${products.length} producto${products.length === 1 ? "" : "s"}`
+                : `${products.length} producto${products.length === 1 ? "" : "s"}`}
+            </p>
+
             {loadingData ? (
               <p className="text-neutral-400">Cargando productos…</p>
+            ) : filteredProducts.length === 0 && q ? (
+              <div className="rounded-lg bg-white p-10 text-center text-neutral-400 shadow-sm">
+                No se encontró ningún producto para{" "}
+                <span className="font-700">“{query}”</span>.
+              </div>
             ) : (
               <ProductTable
-                products={products}
+                products={filteredProducts}
                 currencySymbol={settings.currency_symbol}
                 onEdit={(p) => {
                   setEditProduct(p);
