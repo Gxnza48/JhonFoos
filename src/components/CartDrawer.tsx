@@ -34,6 +34,8 @@ export default function CartDrawer({ open, onClose, settings }: Props) {
     if (items.length === 0) return;
     const link = buildWhatsappLink(items, settings);
     window.open(link, "_blank", "noopener,noreferrer");
+    clear();
+    onClose();
   }
 
   return (
